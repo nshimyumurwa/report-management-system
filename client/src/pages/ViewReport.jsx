@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getReportById, submitReport, getUsers, reviewReport } from '../services/api';
+import Footer from '../components/Footer';
 
 const ViewReport = () => {
   const { id } = useParams();
@@ -73,7 +74,7 @@ const ViewReport = () => {
   if (loading) return <div className="p-10 text-center text-gray-500">Loading report...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 flex flex-col">
       <nav className="bg-blue-800 text-white px-6 py-4 flex justify-between items-center">
         <div>
           <h1 className="font-bold text-lg">RMS — Ministry of ICT & Innovation</h1>
@@ -87,7 +88,7 @@ const ViewReport = () => {
         </button>
       </nav>
 
-      <div className="max-w-3xl mx-auto p-6">
+      <div className="max-w-3xl mx-auto p-6 flex-grow w-full">
         {success && (
           <div className="bg-green-100 text-green-700 px-4 py-3 rounded mb-4 text-sm">{success}</div>
         )}
@@ -116,14 +117,11 @@ const ViewReport = () => {
           </div>
         </div>
 
-        {/* Submit for approval */}
         {report.status === 'draft' && (
           <div className="bg-white rounded-lg shadow p-6 mb-4">
             {!showSubmitForm ? (
-              <button
-                onClick={() => setShowSubmitForm(true)}
-                className="bg-blue-800 text-white px-6 py-2 rounded font-medium hover:bg-blue-900"
-              >
+              <button onClick={() => setShowSubmitForm(true)}
+                className="bg-blue-800 text-white px-6 py-2 rounded font-medium hover:bg-blue-900">
                 Submit Report for Approval
               </button>
             ) : (
@@ -131,12 +129,8 @@ const ViewReport = () => {
                 <h3 className="font-semibold text-gray-700">Submit Report To</h3>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Select Recipient</label>
-                  <select
-                    value={submitTo}
-                    onChange={(e) => setSubmitTo(e.target.value)}
-                    required
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
+                  <select value={submitTo} onChange={(e) => setSubmitTo(e.target.value)} required
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">-- Select a person --</option>
                     {users.map((u) => (
                       <option key={u.id} value={u.id}>
@@ -147,13 +141,9 @@ const ViewReport = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Note (optional)</label>
-                  <textarea
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    rows={3}
+                  <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3}
                     placeholder="Add a note for the reviewer..."
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div className="flex gap-3">
                   <button type="submit" disabled={submitting}
@@ -170,14 +160,11 @@ const ViewReport = () => {
           </div>
         )}
 
-        {/* Approve / Reject */}
         {report.status === 'submitted' && (
           <div className="bg-white rounded-lg shadow p-6">
             {!showReviewForm ? (
-              <button
-                onClick={() => setShowReviewForm(true)}
-                className="bg-green-700 text-white px-6 py-2 rounded font-medium hover:bg-green-800"
-              >
+              <button onClick={() => setShowReviewForm(true)}
+                className="bg-green-700 text-white px-6 py-2 rounded font-medium hover:bg-green-800">
                 Review This Report
               </button>
             ) : (
@@ -185,24 +172,17 @@ const ViewReport = () => {
                 <h3 className="font-semibold text-gray-700">Submit Your Review</h3>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Decision</label>
-                  <select
-                    value={decision}
-                    onChange={(e) => setDecision(e.target.value)}
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
+                  <select value={decision} onChange={(e) => setDecision(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="approved">Approve</option>
                     <option value="rejected">Reject</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Comment (optional)</label>
-                  <textarea
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    rows={3}
+                  <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={3}
                     placeholder="Add a comment..."
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div className="flex gap-3">
                   <button type="submit" disabled={submitting}
@@ -219,6 +199,7 @@ const ViewReport = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };
