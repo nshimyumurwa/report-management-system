@@ -99,7 +99,12 @@ const Dashboard = () => {
               <tbody className="divide-y divide-gray-100">
                 {reports.map((report) => (
                   <tr key={report.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-3 font-medium text-blue-700">{report.title}</td>
+                   <td
+                      className="px-6 py-3 font-medium text-blue-700 cursor-pointer hover:underline"
+                      onClick={() => navigate(`/reports/${report.id}`)}
+                      >
+                       {report.title}
+                    </td>
                     <td className="px-6 py-3 capitalize">{report.report_type}</td>
                     <td className="px-6 py-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${

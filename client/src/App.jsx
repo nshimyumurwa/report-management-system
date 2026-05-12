@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import CreateReport from './pages/CreateReport';
+import ViewReport from './pages/ViewReport';
 
 const ProtectedRoute = ({ children }) => {
   const { token } = useAuth();
@@ -28,6 +29,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <CreateReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports/:id"
+            element={
+              <ProtectedRoute>
+                <ViewReport />
               </ProtectedRoute>
             }
           />

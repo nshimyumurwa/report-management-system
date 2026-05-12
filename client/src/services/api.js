@@ -29,3 +29,4 @@ export const getReports = () => API.get('/reports');
 export const getReportById = (id) => API.get(`/reports/${id}`);
 export const submitReport = (id, data) => API.put(`/reports/${id}/submit`, data);
 export const reviewReport = (id, data) => API.put(`/reports/${id}/review`, data);
+export const getUsers = () => API.get('/users');
