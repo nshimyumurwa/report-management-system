@@ -45,6 +45,12 @@ const Dashboard = () => {
             Manage Users
           </button>
           <button
+            onClick={() => navigate('/delegations')}
+            className="bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-600"
+          >
+            Delegations
+          </button>
+          <button
             onClick={handleLogout}
             className="bg-white text-blue-800 px-3 py-1 rounded text-sm font-medium hover:bg-blue-100"
           >
