@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUsers } from '../services/api';
 import axios from 'axios';
+import Footer from '../components/Footer';
 
 const API = axios.create({ baseURL: 'http://localhost:5000/api' });
 API.interceptors.request.use((config) => {
@@ -18,13 +19,7 @@ const Delegations = () => {
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
-  const [form, setForm] = useState({
-    delegator_id: '',
-    delegate_id: '',
-    reason: '',
-    valid_from: '',
-    valid_until: '',
-  });
+  const [form, setForm] = useState({ delegator_id: '', delegate_id: '', reason: '', valid_from: '', valid_until: '' });
 
   const fetchDelegations = async () => {
     const res = await API.get('/delegations');
@@ -40,9 +35,7 @@ const Delegations = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,126 +57,62 @@ const Delegations = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 flex flex-col">
       <nav className="bg-blue-800 text-white px-6 py-4 flex justify-between items-center">
         <div>
           <h1 className="font-bold text-lg">RMS — Ministry of ICT & Innovation</h1>
           <p className="text-blue-200 text-sm">Report Management System</p>
         </div>
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="bg-white text-blue-800 px-3 py-1 rounded text-sm font-medium hover:bg-blue-100"
-        >
-          ← Back to Dashboard
-        </button>
+        <button onClick={() => navigate('/dashboard')} className="bg-white text-blue-800 px-3 py-1 rounded text-sm font-medium hover:bg-blue-100">← Back to Dashboard</button>
       </nav>
 
-      <div className="max-w-5xl mx-auto p-6">
-        {success && (
-          <div className="bg-green-100 text-green-700 px-4 py-3 rounded mb-4 text-sm">{success}</div>
-        )}
-        {error && (
-          <div className="bg-red-100 text-red-700 px-4 py-3 rounded mb-4 text-sm">{error}</div>
-        )}
+      <div className="max-w-5xl mx-auto p-6 flex-grow w-full">
+        {success && <div className="bg-green-100 text-green-700 px-4 py-3 rounded mb-4 text-sm">{success}</div>}
+        {error && <div className="bg-red-100 text-red-700 px-4 py-3 rounded mb-4 text-sm">{error}</div>}
 
-        {/* Create Delegation Form */}
         {showForm && (
           <div className="bg-white rounded-lg shadow p-6 mb-6">
             <h2 className="font-semibold text-gray-700 mb-4">Create New Delegation</h2>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Delegator (Who is delegating)</label>
-                <select
-                  name="delegator_id"
-                  value={form.delegator_id}
-                  onChange={handleChange}
-                  required
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
+                <select name="delegator_id" value={form.delegator_id} onChange={handleChange} required className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="">-- Select Person --</option>
-                  {users.map((u) => (
-                    <option key={u.id} value={u.id}>{u.full_name} {u.role ? `— ${u.role}` : ''}</option>
-                  ))}
+                  {users.map((u) => <option key={u.id} value={u.id}>{u.full_name} {u.role ? `— ${u.role}` : ''}</option>)}
                 </select>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Delegate (Who will represent)</label>
-                <select
-                  name="delegate_id"
-                  value={form.delegate_id}
-                  onChange={handleChange}
-                  required
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
+                <select name="delegate_id" value={form.delegate_id} onChange={handleChange} required className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="">-- Select Person --</option>
-                  {users.map((u) => (
-                    <option key={u.id} value={u.id}>{u.full_name} {u.role ? `— ${u.role}` : ''}</option>
-                  ))}
+                  {users.map((u) => <option key={u.id} value={u.id}>{u.full_name} {u.role ? `— ${u.role}` : ''}</option>)}
                 </select>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Valid From</label>
-                <input
-                  type="datetime-local"
-                  name="valid_from"
-                  value={form.valid_from}
-                  onChange={handleChange}
-                  required
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <input type="datetime-local" name="valid_from" value={form.valid_from} onChange={handleChange} required className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Valid Until (optional)</label>
-                <input
-                  type="datetime-local"
-                  name="valid_until"
-                  value={form.valid_until}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <input type="datetime-local" name="valid_until" value={form.valid_until} onChange={handleChange} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
-
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
-                <textarea
-                  name="reason"
-                  value={form.reason}
-                  onChange={handleChange}
-                  rows={3}
-                  placeholder="e.g. Minister attending UN summit, PS to represent"
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <textarea name="reason" value={form.reason} onChange={handleChange} rows={3} placeholder="e.g. Minister attending UN summit, PS to represent" className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
-
               <div className="md:col-span-2 flex gap-3">
-                <button type="submit"
-                  className="bg-blue-800 text-white px-6 py-2 rounded font-medium hover:bg-blue-900">
-                  Create Delegation
-                </button>
-                <button type="button" onClick={() => setShowForm(false)}
-                  className="bg-gray-200 text-gray-700 px-6 py-2 rounded font-medium hover:bg-gray-300">
-                  Cancel
-                </button>
+                <button type="submit" className="bg-blue-800 text-white px-6 py-2 rounded font-medium hover:bg-blue-900">Create Delegation</button>
+                <button type="button" onClick={() => setShowForm(false)} className="bg-gray-200 text-gray-700 px-6 py-2 rounded font-medium hover:bg-gray-300">Cancel</button>
               </div>
             </form>
           </div>
         )}
 
-        {/* Delegations Table */}
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b flex justify-between items-center">
             <h2 className="font-semibold text-gray-700">Active Delegations ({delegations.length})</h2>
-            <button
-              onClick={() => { setShowForm(true); setSuccess(''); setError(''); }}
-              className="bg-blue-800 text-white px-4 py-2 rounded text-sm hover:bg-blue-900"
-            >
-              + New Delegation
-            </button>
+            <button onClick={() => { setShowForm(true); setSuccess(''); setError(''); }} className="bg-blue-800 text-white px-4 py-2 rounded text-sm hover:bg-blue-900">+ New Delegation</button>
           </div>
-
           {loading ? (
             <div className="p-6 text-center text-gray-500">Loading delegations...</div>
           ) : delegations.length === 0 ? (
@@ -214,6 +143,7 @@ const Delegations = () => {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
