@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import CreateReport from './pages/CreateReport';
 
 const ProtectedRoute = ({ children }) => {
   const { token } = useAuth();
@@ -19,6 +20,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports/create"
+            element={
+              <ProtectedRoute>
+                <CreateReport />
               </ProtectedRoute>
             }
           />
