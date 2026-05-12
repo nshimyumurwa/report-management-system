@@ -39,6 +39,12 @@ const Dashboard = () => {
         <div className="flex items-center gap-4">
           <span className="text-sm">Welcome, {user?.full_name}</span>
           <button
+            onClick={() => navigate('/users')}
+            className="bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-600"
+          >
+            Manage Users
+          </button>
+          <button
             onClick={handleLogout}
             className="bg-white text-blue-800 px-3 py-1 rounded text-sm font-medium hover:bg-blue-100"
           >
@@ -99,11 +105,11 @@ const Dashboard = () => {
               <tbody className="divide-y divide-gray-100">
                 {reports.map((report) => (
                   <tr key={report.id} className="hover:bg-gray-50">
-                   <td
+                    <td
                       className="px-6 py-3 font-medium text-blue-700 cursor-pointer hover:underline"
                       onClick={() => navigate(`/reports/${report.id}`)}
-                      >
-                       {report.title}
+                    >
+                      {report.title}
                     </td>
                     <td className="px-6 py-3 capitalize">{report.report_type}</td>
                     <td className="px-6 py-3">

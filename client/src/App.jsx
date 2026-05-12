@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import CreateReport from './pages/CreateReport';
 import ViewReport from './pages/ViewReport';
+import UserManagement from './pages/UserManagement';
 
 const ProtectedRoute = ({ children }) => {
   const { token } = useAuth();
@@ -16,30 +17,10 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Login />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reports/create"
-            element={
-              <ProtectedRoute>
-                <CreateReport />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reports/:id"
-            element={
-              <ProtectedRoute>
-                <ViewReport />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/reports/create" element={<ProtectedRoute><CreateReport /></ProtectedRoute>} />
+          <Route path="/reports/:id" element={<ProtectedRoute><ViewReport /></ProtectedRoute>} />
+          <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
