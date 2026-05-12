@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getReportById, submitReport, getUsers } from '../services/api';
+import { getReportById, submitReport, getUsers, reviewReport } from '../services/api';
 
 const ViewReport = () => {
   const { id } = useParams();
@@ -12,15 +12,22 @@ const ViewReport = () => {
   const [users, setUsers] = useState([]);
   const [submitTo, setSubmitTo] = useState('');
   const [note, setNote] = useState('');
+  const [decision, setDecision] = useState('approved');
+  const [comment, setComment] = useState('');
+  const [showReviewForm, setShowReviewForm] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+
+  const refreshReport = async () => {
+    const res = await getReportById(id);
+    setReport(res.data);
+  };
 
   useEffect(() => {
     getReportById(id)
       .then((res) => setReport(res.data))
       .catch(() => setError('Report not found.'))
       .finally(() => setLoading(false));
-
     getUsers().then((res) => setUsers(res.data));
   }, [id]);
 
@@ -32,10 +39,25 @@ const ViewReport = () => {
       await submitReport(id, { submitted_to: submitTo, note });
       setSuccess('Report submitted successfully!');
       setShowSubmitForm(false);
-      const res = await getReportById(id);
-      setReport(res.data);
+      await refreshReport();
     } catch (err) {
       setError('Failed to submit report.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReview = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError('');
+    try {
+      await reviewReport(id, { decision, comment, on_behalf_of: null });
+      setSuccess(`Report ${decision} successfully!`);
+      setShowReviewForm(false);
+      await refreshReport();
+    } catch (err) {
+      setError('Failed to submit review.');
     } finally {
       setSubmitting(false);
     }
@@ -67,14 +89,10 @@ const ViewReport = () => {
 
       <div className="max-w-3xl mx-auto p-6">
         {success && (
-          <div className="bg-green-100 text-green-700 px-4 py-3 rounded mb-4 text-sm">
-            {success}
-          </div>
+          <div className="bg-green-100 text-green-700 px-4 py-3 rounded mb-4 text-sm">{success}</div>
         )}
         {error && (
-          <div className="bg-red-100 text-red-700 px-4 py-3 rounded mb-4 text-sm">
-            {error}
-          </div>
+          <div className="bg-red-100 text-red-700 px-4 py-3 rounded mb-4 text-sm">{error}</div>
         )}
 
         <div className="bg-white rounded-lg shadow p-6 mb-4">
@@ -89,19 +107,18 @@ const ViewReport = () => {
               {report.status}
             </span>
           </div>
-
           <div className="border-t pt-4">
             <h3 className="text-sm font-medium text-gray-600 mb-2">Report Content</h3>
             <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{report.content}</p>
           </div>
-
           <div className="border-t pt-4 mt-4 text-sm text-gray-500">
             <p>Author: <span className="text-gray-700 font-medium">{report.author}</span></p>
           </div>
         </div>
 
+        {/* Submit for approval */}
         {report.status === 'draft' && (
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 mb-4">
             {!showSubmitForm ? (
               <button
                 onClick={() => setShowSubmitForm(true)}
@@ -112,11 +129,8 @@ const ViewReport = () => {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <h3 className="font-semibold text-gray-700">Submit Report To</h3>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Select Recipient
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Select Recipient</label>
                   <select
                     value={submitTo}
                     onChange={(e) => setSubmitTo(e.target.value)}
@@ -131,7 +145,6 @@ const ViewReport = () => {
                     ))}
                   </select>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Note (optional)</label>
                   <textarea
@@ -142,20 +155,62 @@ const ViewReport = () => {
                     className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-
                 <div className="flex gap-3">
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="bg-blue-800 text-white px-6 py-2 rounded font-medium hover:bg-blue-900"
-                  >
+                  <button type="submit" disabled={submitting}
+                    className="bg-blue-800 text-white px-6 py-2 rounded font-medium hover:bg-blue-900">
                     {submitting ? 'Submitting...' : 'Submit'}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowSubmitForm(false)}
-                    className="bg-gray-200 text-gray-700 px-6 py-2 rounded font-medium hover:bg-gray-300"
+                  <button type="button" onClick={() => setShowSubmitForm(false)}
+                    className="bg-gray-200 text-gray-700 px-6 py-2 rounded font-medium hover:bg-gray-300">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
+
+        {/* Approve / Reject */}
+        {report.status === 'submitted' && (
+          <div className="bg-white rounded-lg shadow p-6">
+            {!showReviewForm ? (
+              <button
+                onClick={() => setShowReviewForm(true)}
+                className="bg-green-700 text-white px-6 py-2 rounded font-medium hover:bg-green-800"
+              >
+                Review This Report
+              </button>
+            ) : (
+              <form onSubmit={handleReview} className="space-y-4">
+                <h3 className="font-semibold text-gray-700">Submit Your Review</h3>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Decision</label>
+                  <select
+                    value={decision}
+                    onChange={(e) => setDecision(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
+                    <option value="approved">Approve</option>
+                    <option value="rejected">Reject</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Comment (optional)</label>
+                  <textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    rows={3}
+                    placeholder="Add a comment..."
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button type="submit" disabled={submitting}
+                    className="bg-green-700 text-white px-6 py-2 rounded font-medium hover:bg-green-800">
+                    {submitting ? 'Submitting...' : 'Submit Review'}
+                  </button>
+                  <button type="button" onClick={() => setShowReviewForm(false)}
+                    className="bg-gray-200 text-gray-700 px-6 py-2 rounded font-medium hover:bg-gray-300">
                     Cancel
                   </button>
                 </div>
