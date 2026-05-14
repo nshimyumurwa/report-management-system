@@ -27,6 +27,7 @@ export const getRoles = () => API.get('/roles');
 export const createReport = (data) => API.post('/reports', data);
 export const getReports = () => API.get('/reports');
 export const getReportById = (id) => API.get(`/reports/${id}`);
+export const getReportApprovals = (id) => API.get(`/reports/${id}/approvals`);
 export const submitReport = (id, data) => API.put(`/reports/${id}/submit`, data);
 export const reviewReport = (id, data) => API.put(`/reports/${id}/review`, data);
 

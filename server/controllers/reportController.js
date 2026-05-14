@@ -57,25 +57,40 @@ const getReportById = async (req, res) => {
   }
 };
 
+// GET approvals for a report
+const getReportApprovals = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query(
+      `SELECT a.*, u.full_name as reviewer_name
+       FROM approvals a
+       LEFT JOIN users u ON a.reviewed_by = u.id
+       WHERE a.report_id = $1
+       ORDER BY a.decided_at ASC`,
+      [id]
+    );
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
 // SUBMIT a report
 const submitReport = async (req, res) => {
   const { id } = req.params;
   const { submitted_to, note } = req.body;
 
   try {
-    // Update report status to submitted
     await db.query(
       `UPDATE reports SET status = 'submitted', updated_at = NOW() WHERE id = $1`,
       [id]
     );
-
-    // Record the submission
     await db.query(
       `INSERT INTO report_submissions (report_id, submitted_to, note)
        VALUES ($1, $2, $3)`,
       [id, submitted_to, note]
     );
-
     res.status(200).json({ message: 'Report submitted successfully.' });
   } catch (err) {
     console.error(err);
@@ -90,19 +105,15 @@ const reviewReport = async (req, res) => {
   const reviewed_by = req.user.id;
 
   try {
-    // Update report status
     await db.query(
       `UPDATE reports SET status = $1, updated_at = NOW() WHERE id = $2`,
       [decision, id]
     );
-
-    // Record the approval decision
     await db.query(
       `INSERT INTO approvals (report_id, reviewed_by, decision, comment, on_behalf_of)
        VALUES ($1, $2, $3, $4, $5)`,
       [id, reviewed_by, decision, comment, on_behalf_of]
     );
-
     res.status(200).json({ message: `Report ${decision} successfully.` });
   } catch (err) {
     console.error(err);
@@ -110,4 +121,4 @@ const reviewReport = async (req, res) => {
   }
 };
 
-module.exports = { createReport, getReports, getReportById, submitReport, reviewReport };
+module.exports = { createReport, getReports, getReportById, getReportApprovals, submitReport, reviewReport };

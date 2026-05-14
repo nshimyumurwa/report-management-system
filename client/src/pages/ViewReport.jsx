@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getReportById, submitReport, getDepartmentHeads, reviewReport } from '../services/api';
+import { getReportById, submitReport, getDepartmentHeads, reviewReport, getReportApprovals } from '../services/api';
 import Footer from '../components/Footer';
 
 const ViewReport = () => {
@@ -11,6 +11,7 @@ const ViewReport = () => {
   const [submitting, setSubmitting] = useState(false);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
   const [heads, setHeads] = useState([]);
+  const [approvals, setApprovals] = useState([]);
   const [submitTo, setSubmitTo] = useState('');
   const [note, setNote] = useState('');
   const [decision, setDecision] = useState('approved');
@@ -22,6 +23,8 @@ const ViewReport = () => {
   const refreshReport = async () => {
     const res = await getReportById(id);
     setReport(res.data);
+    const approvalsRes = await getReportApprovals(id);
+    setApprovals(approvalsRes.data);
   };
 
   useEffect(() => {
@@ -30,6 +33,7 @@ const ViewReport = () => {
       .catch(() => setError('Report not found.'))
       .finally(() => setLoading(false));
     getDepartmentHeads().then((res) => setHeads(res.data));
+    getReportApprovals(id).then((res) => setApprovals(res.data));
   }, [id]);
 
   const handleSubmit = async (e) => {
@@ -100,6 +104,7 @@ const ViewReport = () => {
           <div className="bg-red-100 text-red-700 px-4 py-3 rounded mb-4 text-sm">{error}</div>
         )}
 
+        {/* Report Details */}
         <div className="bg-white rounded-lg shadow p-6 mb-4">
           <div className="flex justify-between items-start mb-4">
             <div>
@@ -120,7 +125,6 @@ const ViewReport = () => {
             </p>
           </div>
 
-          {/* File Attachment Download */}
           {report.file_attachment && (
             <div className="border-t pt-4 mt-4">
               <h3 className="text-sm font-medium text-gray-600 mb-2">Attached Document</h3>
@@ -136,6 +140,43 @@ const ViewReport = () => {
           </div>
         </div>
 
+        {/* Approval History */}
+        {approvals.length > 0 && (
+          <div className="bg-white rounded-lg shadow p-6 mb-4">
+            <h3 className="font-semibold text-gray-700 mb-4">Review History</h3>
+            <div className="space-y-3">
+              {approvals.map((a) => (
+                <div key={a.id} className={`border rounded-lg p-4 ${
+                  a.decision === 'approved' ? 'border-green-200 bg-green-50' :
+                  a.decision === 'rejected' ? 'border-red-200 bg-red-50' :
+                  'border-gray-200 bg-gray-50'
+                }`}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full capitalize ${
+                        a.decision === 'approved' ? 'bg-green-100 text-green-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {a.decision}
+                      </span>
+                      <span className="text-sm text-gray-600 ml-2">
+                        by <strong>{a.reviewer_name}</strong>
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      {new Date(a.decided_at).toLocaleDateString()} {new Date(a.decided_at).toLocaleTimeString()}
+                    </span>
+                  </div>
+                  {a.comment && (
+                    <p className="text-sm text-gray-600 mt-2 italic">"{a.comment}"</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Submit for Approval */}
         {report.status === 'draft' && (
           <div className="bg-white rounded-lg shadow p-6 mb-4">
             {!showSubmitForm ? (
@@ -179,6 +220,7 @@ const ViewReport = () => {
           </div>
         )}
 
+        {/* Review */}
         {report.status === 'submitted' && (
           <div className="bg-white rounded-lg shadow p-6">
             {!showReviewForm ? (
