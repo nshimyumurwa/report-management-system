@@ -7,21 +7,21 @@ import Footer from '../components/Footer';
 const Dashboard = () => {
   const { user, logoutUser } = useAuth();
   const [reports, setReports] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
   const navigate = useNavigate();
 
-  // Check if user is admin/management
   const isAdmin = user?.access_level >= 3;
 
   useEffect(() => {
     const fetchReports = async () => {
       try {
         const res = await getReports();
-        // Staff only sees their own reports
-        const filtered = isAdmin
-          ? res.data
-          : res.data.filter(r => r.submitted_by === user?.id);
-        setReports(filtered);
+        setReports(res.data);
+        setFiltered(res.data);
       } catch (err) {
         console.error(err);
       } finally {
@@ -30,6 +30,20 @@ const Dashboard = () => {
     };
     fetchReports();
   }, []);
+
+  useEffect(() => {
+    let result = reports;
+    if (search) {
+      result = result.filter(r => r.title.toLowerCase().includes(search.toLowerCase()));
+    }
+    if (statusFilter !== 'all') {
+      result = result.filter(r => r.status === statusFilter);
+    }
+    if (typeFilter !== 'all') {
+      result = result.filter(r => r.report_type === typeFilter);
+    }
+    setFiltered(result);
+  }, [search, statusFilter, typeFilter, reports]);
 
   const handleLogout = () => {
     logoutUser();
@@ -70,14 +84,12 @@ const Dashboard = () => {
       </nav>
 
       <div className="p-6 flex-grow">
-        {/* Role banner for staff */}
         {!isAdmin && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-6 text-sm text-blue-700">
             You are logged in as <strong>{user?.role_name || 'Staff'}</strong> — {user?.department_name || 'No department'}. You can create and submit your own reports.
           </div>
         )}
 
-        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow p-4">
             <p className="text-gray-500 text-sm">{isAdmin ? 'Total Reports' : 'My Reports'}</p>
@@ -97,22 +109,52 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Reports Table */}
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b flex justify-between items-center">
-            <h2 className="font-semibold text-gray-700">
-              {isAdmin ? 'All Reports' : 'My Reports'}
-            </h2>
+            <h2 className="font-semibold text-gray-700">{isAdmin ? 'All Reports' : 'My Reports'}</h2>
             <button onClick={() => navigate('/reports/create')}
               className="bg-blue-800 text-white px-4 py-2 rounded text-sm hover:bg-blue-900">
               + New Report
             </button>
           </div>
 
+          {/* Search & Filter */}
+          <div className="px-6 py-3 border-b bg-gray-50 flex flex-wrap gap-3">
+            <input
+              type="text"
+              placeholder="Search by title..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
+            />
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="all">All Statuses</option>
+              <option value="draft">Draft</option>
+              <option value="submitted">Submitted</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="all">All Types</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="meeting">Meeting</option>
+              <option value="ad-hoc">Ad-hoc</option>
+            </select>
+            {(search || statusFilter !== 'all' || typeFilter !== 'all') && (
+              <button onClick={() => { setSearch(''); setStatusFilter('all'); setTypeFilter('all'); }}
+                className="text-sm text-red-500 hover:text-red-700">
+                Clear filters
+              </button>
+            )}
+          </div>
+
           {loading ? (
             <div className="p-6 text-center text-gray-500">Loading reports...</div>
-          ) : reports.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">No reports yet.</div>
+          ) : filtered.length === 0 ? (
+            <div className="p-6 text-center text-gray-500">No reports found.</div>
           ) : (
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-600">
@@ -125,7 +167,7 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {reports.map((report) => (
+                {filtered.map((report) => (
                   <tr key={report.id} className="hover:bg-gray-50">
                     <td className="px-6 py-3 font-medium text-blue-700 cursor-pointer hover:underline"
                       onClick={() => navigate(`/reports/${report.id}`)}>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createReport, getDepartments, getUsers, submitReport } from '../services/api';
+import { createReport, getDepartments, getUsers, submitReport, uploadFile } from '../services/api';
 import Footer from '../components/Footer';
 
 const CreateReport = () => {
@@ -16,6 +16,9 @@ const CreateReport = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitTo, setSubmitTo] = useState('');
+  const [file, setFile] = useState(null);
+  const [fileName, setFileName] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -28,12 +31,38 @@ const CreateReport = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e) => {
+    const selected = e.target.files[0];
+    if (selected) {
+      setFile(selected);
+      setFileName(selected.name);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!file) return null;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await uploadFile(formData);
+      return res.data.fileUrl;
+    } catch (err) {
+      setError('File upload failed. Please try again.');
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSaveDraft = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      await createReport(form);
+      let fileUrl = null;
+      if (file) fileUrl = await handleUpload();
+      await createReport({ ...form, file_attachment: fileUrl });
       navigate('/dashboard');
     } catch (err) {
       setError('Failed to save report. Please try again.');
@@ -51,7 +80,9 @@ const CreateReport = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await createReport(form);
+      let fileUrl = null;
+      if (file) fileUrl = await handleUpload();
+      const res = await createReport({ ...form, file_attachment: fileUrl });
       await submitReport(res.data.report.id, { submitted_to: submitTo, note: '' });
       navigate('/dashboard');
     } catch (err) {
@@ -111,13 +142,32 @@ const CreateReport = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Report Content</label>
-              <textarea name="content" value={form.content} onChange={handleChange} required rows={6}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Report Content
+                <span className="text-gray-400 font-normal ml-1">(optional if attaching a file)</span>
+              </label>
+              <textarea name="content" value={form.content} onChange={handleChange} rows={5}
                 className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Write the report content here..." />
+                placeholder="Write the report content here or attach a file below..." />
             </div>
 
-            {/* Submit To section */}
+            {/* File Attachment */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Attach Document <span className="text-gray-400 font-normal">(PDF, Word, Excel, Image — max 10MB)</span>
+              </label>
+              <div className="flex items-center gap-3">
+                <label className="cursor-pointer bg-gray-100 border border-gray-300 rounded px-4 py-2 text-sm text-gray-700 hover:bg-gray-200">
+                  📎 Choose File
+                  <input type="file" onChange={handleFileChange} className="hidden"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" />
+                </label>
+                {fileName && (
+                  <span className="text-sm text-green-600">✅ {fileName}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Submit To */}
             <div className="border-t pt-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Submit To <span className="text-gray-400 font-normal">(required only if submitting now)</span>
@@ -135,11 +185,11 @@ const CreateReport = () => {
 
             {/* Action Buttons */}
             <div className="flex gap-3 pt-2">
-              <button type="button" onClick={handleSaveDraft} disabled={loading}
+              <button type="button" onClick={handleSaveDraft} disabled={loading || uploading}
                 className="bg-gray-600 text-white px-6 py-2 rounded font-medium hover:bg-gray-700">
                 {loading ? 'Saving...' : '💾 Save as Draft'}
               </button>
-              <button type="button" onClick={handleSubmitNow} disabled={loading}
+              <button type="button" onClick={handleSubmitNow} disabled={loading || uploading}
                 className="bg-blue-800 text-white px-6 py-2 rounded font-medium hover:bg-blue-900">
                 {loading ? 'Submitting...' : '📤 Submit Now'}
               </button>
