@@ -32,6 +32,7 @@ export const reviewReport = (id, data) => API.put(`/reports/${id}/review`, data)
 
 // Users
 export const getUsers = () => API.get('/users');
+export const getDepartmentHeads = () => API.get('/users/heads');
 
 // File Upload
 export const uploadFile = (formData) => API.post('/upload', formData, {

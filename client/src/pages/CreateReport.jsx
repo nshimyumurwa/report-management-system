@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createReport, getDepartments, getUsers, submitReport, uploadFile } from '../services/api';
+import { createReport, getDepartments, getDepartmentHeads, submitReport, uploadFile } from '../services/api';
 import Footer from '../components/Footer';
 
 const CreateReport = () => {
@@ -13,7 +13,7 @@ const CreateReport = () => {
     file_attachment: null,
   });
   const [departments, setDepartments] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [heads, setHeads] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitTo, setSubmitTo] = useState('');
   const [file, setFile] = useState(null);
@@ -24,7 +24,7 @@ const CreateReport = () => {
 
   useEffect(() => {
     getDepartments().then((res) => setDepartments(res.data));
-    getUsers().then((res) => setUsers(res.data));
+    getDepartmentHeads().then((res) => setHeads(res.data));
   }, []);
 
   const handleChange = (e) => {
@@ -175,7 +175,7 @@ const CreateReport = () => {
               <select value={submitTo} onChange={(e) => setSubmitTo(e.target.value)}
                 className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">-- Select Recipient --</option>
-                {users.map((u) => (
+                {heads.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.full_name} {u.role ? `— ${u.role}` : ''} {u.department ? `(${u.department})` : ''}
                   </option>

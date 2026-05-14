@@ -12,6 +12,8 @@ const Dashboard = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const navigate = useNavigate();
 
   const isAdmin = user?.access_level >= 3;
@@ -42,8 +44,14 @@ const Dashboard = () => {
     if (typeFilter !== 'all') {
       result = result.filter(r => r.report_type === typeFilter);
     }
+    if (dateFrom) {
+      result = result.filter(r => new Date(r.created_at) >= new Date(dateFrom));
+    }
+    if (dateTo) {
+      result = result.filter(r => new Date(r.created_at) <= new Date(dateTo + 'T23:59:59'));
+    }
     setFiltered(result);
-  }, [search, statusFilter, typeFilter, reports]);
+  }, [search, statusFilter, typeFilter, dateFrom, dateTo, reports]);
 
   const handleLogout = () => {
     logoutUser();
@@ -119,7 +127,7 @@ const Dashboard = () => {
           </div>
 
           {/* Search & Filter */}
-          <div className="px-6 py-3 border-b bg-gray-50 flex flex-wrap gap-3">
+          <div className="px-6 py-3 border-b bg-gray-50 flex flex-wrap gap-3 items-center">
             <input
               type="text"
               placeholder="Search by title..."
@@ -143,8 +151,18 @@ const Dashboard = () => {
               <option value="meeting">Meeting</option>
               <option value="ad-hoc">Ad-hoc</option>
             </select>
-            {(search || statusFilter !== 'all' || typeFilter !== 'all') && (
-              <button onClick={() => { setSearch(''); setStatusFilter('all'); setTypeFilter('all'); }}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">From:</span>
+              <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+                className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">To:</span>
+              <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+                className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            {(search || statusFilter !== 'all' || typeFilter !== 'all' || dateFrom || dateTo) && (
+              <button onClick={() => { setSearch(''); setStatusFilter('all'); setTypeFilter('all'); setDateFrom(''); setDateTo(''); }}
                 className="text-sm text-red-500 hover:text-red-700">
                 Clear filters
               </button>

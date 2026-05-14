@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { getUsers } = require('../controllers/userController');
+const { getUsers, getDepartmentHeads } = require('../controllers/userController');
+const verifyToken = require('../middleware/auth');
 
-// GET /api/users — public for now
-router.get('/', getUsers);
+router.get('/', verifyToken, getUsers);
+router.get('/heads', verifyToken, getDepartmentHeads);
 
 module.exports = router;
