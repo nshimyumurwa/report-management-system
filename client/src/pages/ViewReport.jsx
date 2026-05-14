@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getReportById, submitReport, getUsers, reviewReport } from '../services/api';
+import { getReportById, submitReport, getDepartmentHeads, reviewReport } from '../services/api';
 import Footer from '../components/Footer';
 
 const ViewReport = () => {
@@ -10,7 +10,7 @@ const ViewReport = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
-  const [users, setUsers] = useState([]);
+  const [heads, setHeads] = useState([]);
   const [submitTo, setSubmitTo] = useState('');
   const [note, setNote] = useState('');
   const [decision, setDecision] = useState('approved');
@@ -29,7 +29,7 @@ const ViewReport = () => {
       .then((res) => setReport(res.data))
       .catch(() => setError('Report not found.'))
       .finally(() => setLoading(false));
-    getUsers().then((res) => setUsers(res.data));
+    getDepartmentHeads().then((res) => setHeads(res.data));
   }, [id]);
 
   const handleSubmit = async (e) => {
@@ -64,6 +64,12 @@ const ViewReport = () => {
     }
   };
 
+  const handleDownload = () => {
+    if (report.file_attachment) {
+      window.open(`http://localhost:5000${report.file_attachment}`, '_blank');
+    }
+  };
+
   const statusColor = (status) => {
     if (status === 'approved') return 'bg-green-100 text-green-700';
     if (status === 'rejected') return 'bg-red-100 text-red-700';
@@ -80,10 +86,8 @@ const ViewReport = () => {
           <h1 className="font-bold text-lg">RMS — Ministry of ICT & Innovation</h1>
           <p className="text-blue-200 text-sm">Report Management System</p>
         </div>
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="bg-white text-blue-800 px-3 py-1 rounded text-sm font-medium hover:bg-blue-100"
-        >
+        <button onClick={() => navigate('/dashboard')}
+          className="bg-white text-blue-800 px-3 py-1 rounded text-sm font-medium hover:bg-blue-100">
           ← Back to Dashboard
         </button>
       </nav>
@@ -108,10 +112,25 @@ const ViewReport = () => {
               {report.status}
             </span>
           </div>
+
           <div className="border-t pt-4">
             <h3 className="text-sm font-medium text-gray-600 mb-2">Report Content</h3>
-            <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{report.content}</p>
+            <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+              {report.content || <span className="text-gray-400 italic">No text content — see attached file.</span>}
+            </p>
           </div>
+
+          {/* File Attachment Download */}
+          {report.file_attachment && (
+            <div className="border-t pt-4 mt-4">
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Attached Document</h3>
+              <button onClick={handleDownload}
+                className="flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded text-sm hover:bg-blue-100">
+                📥 Download Attachment
+              </button>
+            </div>
+          )}
+
           <div className="border-t pt-4 mt-4 text-sm text-gray-500">
             <p>Author: <span className="text-gray-700 font-medium">{report.author}</span></p>
           </div>
@@ -132,7 +151,7 @@ const ViewReport = () => {
                   <select value={submitTo} onChange={(e) => setSubmitTo(e.target.value)} required
                     className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">-- Select a person --</option>
-                    {users.map((u) => (
+                    {heads.map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.full_name} {u.role ? `— ${u.role}` : ''} {u.department ? `(${u.department})` : ''}
                       </option>
