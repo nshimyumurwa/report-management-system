@@ -82,15 +82,36 @@ const submitReport = async (req, res) => {
   const { submitted_to, note } = req.body;
 
   try {
+    // Get report title and submitter name
+    const reportResult = await db.query(
+      `SELECT r.title, u.full_name as submitter_name
+       FROM reports r
+       LEFT JOIN users u ON r.submitted_by = u.id
+       WHERE r.id = $1`,
+      [id]
+    );
+    const report = reportResult.rows[0];
+
+    // Update report status
     await db.query(
       `UPDATE reports SET status = 'submitted', updated_at = NOW() WHERE id = $1`,
       [id]
     );
+
+    // Record the submission
     await db.query(
       `INSERT INTO report_submissions (report_id, submitted_to, note)
        VALUES ($1, $2, $3)`,
       [id, submitted_to, note]
     );
+
+    // Create notification for recipient
+    await db.query(
+      `INSERT INTO notifications (user_id, message, report_id)
+       VALUES ($1, $2, $3)`,
+      [submitted_to, `${report.submitter_name} submitted a report: "${report.title}"`, id]
+    );
+
     res.status(200).json({ message: 'Report submitted successfully.' });
   } catch (err) {
     console.error(err);
@@ -105,15 +126,36 @@ const reviewReport = async (req, res) => {
   const reviewed_by = req.user.id;
 
   try {
+    // Get report details
+    const reportResult = await db.query(
+      `SELECT r.title, r.submitted_by, u.full_name as reviewer_name
+       FROM reports r
+       LEFT JOIN users u ON u.id = $1
+       WHERE r.id = $2`,
+      [reviewed_by, id]
+    );
+    const report = reportResult.rows[0];
+
+    // Update report status
     await db.query(
       `UPDATE reports SET status = $1, updated_at = NOW() WHERE id = $2`,
       [decision, id]
     );
+
+    // Record the approval
     await db.query(
       `INSERT INTO approvals (report_id, reviewed_by, decision, comment, on_behalf_of)
        VALUES ($1, $2, $3, $4, $5)`,
       [id, reviewed_by, decision, comment, on_behalf_of]
     );
+
+    // Notify the report author
+    await db.query(
+      `INSERT INTO notifications (user_id, message, report_id)
+       VALUES ($1, $2, $3)`,
+      [report.submitted_by, `Your report "${report.title}" was ${decision} by ${report.reviewer_name}`, id]
+    );
+
     res.status(200).json({ message: `Report ${decision} successfully.` });
   } catch (err) {
     console.error(err);

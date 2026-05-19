@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getReports } from '../services/api';
+import { getReports, getNotifications, markAllAsRead } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
 
@@ -14,23 +14,30 @@ const Dashboard = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
 
   const isAdmin = user?.access_level >= 3;
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   useEffect(() => {
-    const fetchReports = async () => {
+    const fetchData = async () => {
       try {
-        const res = await getReports();
-        setReports(res.data);
-        setFiltered(res.data);
+        const [reportsRes, notifRes] = await Promise.all([
+          getReports(),
+          getNotifications()
+        ]);
+        setReports(reportsRes.data);
+        setFiltered(reportsRes.data);
+        setNotifications(notifRes.data);
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    fetchReports();
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -58,6 +65,11 @@ const Dashboard = () => {
     navigate('/');
   };
 
+  const handleMarkAllRead = async () => {
+    await markAllAsRead();
+    setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <nav className="bg-blue-800 text-white px-6 py-4 flex justify-between items-center">
@@ -72,6 +84,47 @@ const Dashboard = () => {
               {user.role_name}
             </span>
           )}
+
+          {/* Notification Bell */}
+          <div className="relative">
+            <button onClick={() => setShowNotifications(!showNotifications)}
+              className="relative bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium hover:bg-blue-600">
+              🔔 {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50 border border-gray-200">
+                <div className="px-4 py-3 border-b flex justify-between items-center">
+                  <h3 className="font-semibold text-gray-700 text-sm">Notifications</h3>
+                  {unreadCount > 0 && (
+                    <button onClick={handleMarkAllRead}
+                      className="text-xs text-blue-600 hover:text-blue-800">
+                      Mark all as read
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <p className="text-center text-gray-400 text-sm py-6">No notifications yet</p>
+                  ) : (
+                    notifications.map((n) => (
+                      <div key={n.id}
+                        className={`px-4 py-3 border-b cursor-pointer hover:bg-gray-50 ${!n.is_read ? 'bg-blue-50' : ''}`}
+                        onClick={() => { navigate(`/reports/${n.report_id}`); setShowNotifications(false); }}>
+                        <p className="text-sm text-gray-700">{n.message}</p>
+                        <p className="text-xs text-gray-400 mt-1">{new Date(n.created_at).toLocaleDateString()}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           {isAdmin && (
             <>
               <button onClick={() => navigate('/users')}
@@ -126,15 +179,10 @@ const Dashboard = () => {
             </button>
           </div>
 
-          {/* Search & Filter */}
           <div className="px-6 py-3 border-b bg-gray-50 flex flex-wrap gap-3 items-center">
-            <input
-              type="text"
-              placeholder="Search by title..."
-              value={search}
+            <input type="text" placeholder="Search by title..." value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
-            />
+              className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48" />
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
               className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="all">All Statuses</option>

@@ -11,6 +11,7 @@ const reportRoutes = require('./routes/reportRoutes');
 const userRoutes = require('./routes/userRoutes');
 const delegationRoutes = require('./routes/delegationRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/delegations', delegationRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: '✅ RMS Backend is running!' });

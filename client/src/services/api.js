@@ -39,3 +39,8 @@ export const getDepartmentHeads = () => API.get('/users/heads');
 export const uploadFile = (formData) => API.post('/upload', formData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });
+
+// Notifications
+export const getNotifications = () => API.get('/notifications');
+export const markAsRead = (id) => API.put(`/notifications/${id}/read`);
+export const markAllAsRead = () => API.put('/notifications/read-all');
